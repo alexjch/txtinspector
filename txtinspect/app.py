@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     # Load command
     load_parser = subparsers.add_parser("load", help="Load documents into the vector store")
     load_parser.add_argument("--source", required=True, help="File or directory to load")
-    load_parser.add_argument("--chunk-size", type=int, default=512, help="Text chunk size")
+    load_parser.add_argument("--chunk-size", type=int, default=0, help="Text chunk size")
 
     # Query command
     query_parser = subparsers.add_parser("query", help="Ask questions about loaded documents")

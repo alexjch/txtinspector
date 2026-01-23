@@ -2,6 +2,8 @@
 
 import argparse
 from pathlib import Path
+from txtinspect.core.document_loader import DocumentLoader
+from txtinspect.config import config
 
 
 def load_command(args: argparse.Namespace) -> None:
@@ -11,18 +13,25 @@ def load_command(args: argparse.Namespace) -> None:
     Args:
         args: Parsed command-line arguments
     """
+    # Validate required arguments are present
+    if not hasattr(args, "source") or args.source is None:
+        raise ValueError("Missing required argument: source path must be provided")
+
+    # Determine the value of chunk_size. The configuration provides a default
+    # that should be superseded only if a non-zero value is provided in the arguments.
+    chunk_size = config.chunk_size
+    if hasattr(args, "chunk_size") and args.chunk_size > 0:
+        chunk_size = args.chunk_size
+
     source_path = Path(args.source)
-    chunk_size = args.chunk_size
 
     print(f"Loading documents from: {source_path}")
     print(f"Chunk size: {chunk_size}")
 
-    if not source_path.exists():
-        print(f"Error: Source path '{source_path}' does not exist")
-        return
-
+    loader = DocumentLoader(chunk_size=chunk_size, chunk_overlap=config.chunk_overlap)
+    # 1. Discover and load files from source_path (txt, md, pdf)
+    loader.load(source_path)
     # TODO: Implement document loading logic
-    # 1. Discover files (txt, md, pdf)
     # 2. Load and chunk documents
     # 3. Generate embeddings
     # 4. Store in vector database
