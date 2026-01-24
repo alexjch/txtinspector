@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import List
 from llama_index.core import SimpleDirectoryReader, Document
+from llama_index.core.node_parser.text import TokenTextSplitter
 
 
 class DocumentLoaderException(Exception):
@@ -34,11 +35,9 @@ class DocumentLoader:
             chunk_size: Size of text chunks
             chunk_overlap: Overlap between chunks
         """
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.documents: List[Document] = []
+        self.splitter = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
-    def load(self, source_path: Path) -> None:
+    def load(self, source_path: Path) -> List[Document]:
         """
         Load text present in source_path, this path can be a directory
         with supported files (txt, pdf, or md).
@@ -51,23 +50,40 @@ class DocumentLoader:
         if not source_path.exists():
             raise DocumentLoaderException("Source path does not exist", source_path)
 
-        if source_path.is_file() and source_path.name[-3:] in ["pdf", ".md", "txt"]:
+        documents: List[Document] = []
+
+        if source_path.is_file() and source_path.suffix in [".pdf", ".md", ".txt"]:
             reader = SimpleDirectoryReader(input_files=[source_path])
-            self.documents.extend(reader.load_data())
+            documents.extend(reader.load_data())
 
         else:
             reader = SimpleDirectoryReader(input_dir=source_path)
-            self.documents.extend(reader.load_data())
+            documents.extend(reader.load_data())
 
-    def chunk_text(self, text: str) -> List[str]:  # type: ignore
+        return documents
+
+    def chunk(self, documents: List[Document]) -> List[str]:
         """
-        Split text into chunks.
+        Split documents into chunks.
 
         Args:
-            text: Input text
+            documents: List of documents to chunk
 
         Returns:
-            List of text chunks
+            List of text chunks as strings
+
+        Raises:
+            ValueError: If no documents are provided
         """
-        # TODO: Implement text chunking logic
-        pass
+        if len(documents) == 0:
+            raise ValueError("No documents provided for chunking")
+
+        chunks: List[str] = []
+
+        for document in documents:
+            # Get nodes from splitter and extract text
+            nodes = self.splitter.split_text(document.text)
+            # Directly extend with nodes iterable to avoid unnecessary list creation
+            chunks.extend(nodes)
+
+        return chunks

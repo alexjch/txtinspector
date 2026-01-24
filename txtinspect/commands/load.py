@@ -30,9 +30,10 @@ def load_command(args: argparse.Namespace) -> None:
 
     loader = DocumentLoader(chunk_size=chunk_size, chunk_overlap=config.chunk_overlap)
     # 1. Discover and load files from source_path (txt, md, pdf)
-    loader.load(source_path)
+    documents = loader.load(source_path)
     # TODO: Implement document loading logic
     # 2. Load and chunk documents
+    _ = loader.chunk(documents)
     # 3. Generate embeddings
     # 4. Store in vector database
 
