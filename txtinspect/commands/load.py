@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 from txtinspect.core.document_loader import DocumentLoader
+from txtinspect.core.embedding_service import EmbeddingService
 from txtinspect.config import config
 
 
@@ -29,12 +30,13 @@ def load_command(args: argparse.Namespace) -> None:
     print(f"Chunk size: {chunk_size}")
 
     loader = DocumentLoader(chunk_size=chunk_size, chunk_overlap=config.chunk_overlap)
+    embedder = EmbeddingService(model_name=config.embedding_model, llm_base_url=config.llm_base_url)
     # 1. Discover and load files from source_path (txt, md, pdf)
     documents = loader.load(source_path)
-    # TODO: Implement document loading logic
     # 2. Load and chunk documents
-    _ = loader.chunk(documents)
+    chunks = loader.chunk(documents)
     # 3. Generate embeddings
+    embedder = EmbeddingService()
     # 4. Store in vector database
 
     print("Loading functionality not yet implemented")
