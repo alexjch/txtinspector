@@ -1,7 +1,6 @@
 """Main application entry point for txtinspect RAG system."""
 
 import argparse
-import sys
 
 
 def parse_args() -> argparse.Namespace:

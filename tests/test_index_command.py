@@ -17,11 +17,11 @@ sys.modules["llama_index.embeddings.ollama"] = Mock()
 sys.modules["llama_index.llms"] = Mock()
 sys.modules["llama_index.llms.ollama"] = Mock()
 
-from txtinspect.commands.index import index_command  # noqa: E402
+from txtinspect.commands.index import index_and_chat  # noqa: E402
 
 
 class TestIndexCommand(unittest.TestCase):
-    """Test cases for index_command function."""
+    """Test cases for index_and_chat function."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -38,22 +38,25 @@ class TestIndexCommand(unittest.TestCase):
         """Test that ValueError is raised when source argument is missing."""
         args = argparse.Namespace()
         with self.assertRaises(ValueError) as context:
-            index_command(args)
+            index_and_chat(args)
         self.assertIn("source directory must be provided", str(context.exception))
 
+    @patch("builtins.input", side_effect=["exit"])
     @patch("txtinspect.commands.index.DocumentIndexer")
-    def test_index_command_with_defaults(self, mock_indexer_class):
-        """Test index_command with default parameters."""
+    def test_index_command_with_defaults(self, mock_indexer_class, mock_input):
+        """Test index_and_chat with default parameters."""
         args = argparse.Namespace(
             source=self.temp_dir, chunk_size=512, chunk_overlap=10, progress=False
         )
 
         mock_indexer = MagicMock()
         mock_index = MagicMock()
+        mock_query_engine = MagicMock()
+        mock_index.as_query_engine.return_value = mock_query_engine
         mock_indexer.create_index.return_value = mock_index
         mock_indexer_class.return_value = mock_indexer
 
-        index_command(args)
+        index_and_chat(args)
 
         # Verify DocumentIndexer was instantiated
         mock_indexer_class.assert_called_once()
@@ -61,9 +64,13 @@ class TestIndexCommand(unittest.TestCase):
         # Verify create_index was called with source path
         mock_indexer.create_index.assert_called_once_with(self.temp_dir)
 
+        # Verify query engine was created
+        mock_index.as_query_engine.assert_called_once()
+
+    @patch("builtins.input", side_effect=["exit"])
     @patch("txtinspect.commands.index.DocumentIndexer")
-    def test_index_command_with_custom_params(self, mock_indexer_class):
-        """Test index_command with custom chunk parameters."""
+    def test_index_command_with_custom_params(self, mock_indexer_class, mock_input):
+        """Test index_and_chat with custom chunk parameters."""
         custom_chunk_size = 1024
         custom_chunk_overlap = 50
 
@@ -76,10 +83,12 @@ class TestIndexCommand(unittest.TestCase):
 
         mock_indexer = MagicMock()
         mock_index = MagicMock()
+        mock_query_engine = MagicMock()
+        mock_index.as_query_engine.return_value = mock_query_engine
         mock_indexer.create_index.return_value = mock_index
         mock_indexer_class.return_value = mock_indexer
 
-        index_command(args)
+        index_and_chat(args)
 
         # Verify DocumentIndexer was initialized with custom parameters
         call_kwargs = mock_indexer_class.call_args[1]
@@ -99,7 +108,7 @@ class TestIndexCommand(unittest.TestCase):
         mock_indexer_class.return_value = mock_indexer
 
         with self.assertRaises(ValueError):
-            index_command(args)
+            index_and_chat(args)
 
     @patch("txtinspect.commands.index.DocumentIndexer")
     def test_index_command_timeout_error(self, mock_indexer_class):
@@ -113,7 +122,7 @@ class TestIndexCommand(unittest.TestCase):
         mock_indexer_class.return_value = mock_indexer
 
         with self.assertRaises(TimeoutError):
-            index_command(args)
+            index_and_chat(args)
 
     @patch("txtinspect.commands.index.DocumentIndexer")
     def test_index_command_general_exception(self, mock_indexer_class):
@@ -127,12 +136,13 @@ class TestIndexCommand(unittest.TestCase):
         mock_indexer_class.return_value = mock_indexer
 
         with self.assertRaises(Exception) as context:
-            index_command(args)
+            index_and_chat(args)
 
         self.assertIn("Indexing failed", str(context.exception))
 
+    @patch("builtins.input", side_effect=["exit"])
     @patch("txtinspect.commands.index.DocumentIndexer")
-    def test_index_command_with_progress_flag(self, mock_indexer_class):
+    def test_index_command_with_progress_flag(self, mock_indexer_class, mock_input):
         """Test that progress flag is properly passed to DocumentIndexer."""
         args = argparse.Namespace(
             source=self.temp_dir, chunk_size=512, chunk_overlap=10, progress=True
@@ -140,10 +150,12 @@ class TestIndexCommand(unittest.TestCase):
 
         mock_indexer = MagicMock()
         mock_index = MagicMock()
+        mock_query_engine = MagicMock()
+        mock_index.as_query_engine.return_value = mock_query_engine
         mock_indexer.create_index.return_value = mock_index
         mock_indexer_class.return_value = mock_indexer
 
-        index_command(args)
+        index_and_chat(args)
 
         # Verify show_progress was set to True
         call_kwargs = mock_indexer_class.call_args[1]
