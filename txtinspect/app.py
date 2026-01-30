@@ -1,4 +1,4 @@
-"""Command routing implementation for the txtinspect CLI application."""
+"""Main application entry point for txtinspect RAG system."""
 
 import argparse
 import sys
@@ -6,62 +6,32 @@ import sys
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Text Inspector - A RAG application for document Q&A"
+        description="Text Inspector - A RAG application for document Q&A",
+        epilog="After indexing, you'll enter an interactive chat session to query your documents.",
     )
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # Load command
-    load_parser = subparsers.add_parser("load", help="Load documents into the vector store")
-    load_parser.add_argument("--source", required=True, help="File or directory to load")
-    load_parser.add_argument("--chunk-size", type=int, default=0, help="Text chunk size")
-
-    # Query command
-    query_parser = subparsers.add_parser("query", help="Ask questions about loaded documents")
-    query_parser.add_argument("--question", required=True, help="Question to ask")
-    query_parser.add_argument(
-        "--top-k",
+    parser.add_argument("source", help="Directory containing documents to index")
+    parser.add_argument(
+        "--chunk-size",
         type=int,
-        default=5,
-        help="Number of relevant chunks to retrieve",
+        default=512,
+        help="Text chunk size for document splitting (default: 512)",
     )
-    query_parser.add_argument("--model", default="llama3", help="LLM model to use")
-
-    # Index command
-    index_parser = subparsers.add_parser("index", help="Manage the vector database")
-    index_subparsers = index_parser.add_subparsers(
-        dest="index_command", help="Index management commands"
+    parser.add_argument(
+        "--chunk-overlap", type=int, default=10, help="Overlap between text chunks (default: 10)"
     )
-    index_subparsers.add_parser("list", help="Show indexed documents")
-    index_subparsers.add_parser("clear", help="Reset the index")
-    index_subparsers.add_parser("stats", help="Display index statistics")
+    parser.add_argument("--progress", action="store_true", help="Show progress during indexing")
 
-    args = parser.parse_args()
-
-    if not args.command or args.command not in ["load", "query", "index"]:
-        parser.print_help()
-        sys.exit(1)
-
-    return args
+    return parser.parse_args()
 
 
 def main() -> None:
-    """Main function to handle CLI arguments and route commands."""
+    """Main function to index documents and start interactive query session."""
     args = parse_args()
 
-    # Route to appropriate command handler
-    if args.command == "load":
-        from txtinspect.commands.load import load_command
+    from txtinspect.commands.index import index_and_chat
 
-        load_command(args)
-    elif args.command == "query":
-        from txtinspect.commands.query import query_command
-
-        query_command(args)
-    elif args.command == "index":
-        from txtinspect.commands.index import index_command
-
-        index_command(args)
+    index_and_chat(args)
 
 
 if __name__ == "__main__":

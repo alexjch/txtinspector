@@ -12,7 +12,7 @@ class Config:
     DEFAULT_CHUNK_SIZE = 512
     DEFAULT_CHUNK_OVERLAP = 50
     DEFAULT_EMBEDDING_MODEL = "nomic-embed-text"
-    DEFAULT_LLM_MODEL = "llama3.2"
+    DEFAULT_LLM_MODEL = "gemma:2b"
     DEFAULT_LLM_BASE_URL = "http://localhost:11434"
     DEFAULT_VECTOR_STORE = "chroma"
     DEFAULT_PERSIST_DIR = "./chroma_db"
