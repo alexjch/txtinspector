@@ -14,8 +14,6 @@ sys.modules["llama_index.core"] = Mock()
 sys.modules["llama_index.core.node_parser"] = Mock()
 sys.modules["llama_index.embeddings"] = Mock()
 sys.modules["llama_index.embeddings.ollama"] = Mock()
-sys.modules["llama_index.llms"] = Mock()
-sys.modules["llama_index.llms.ollama"] = Mock()
 
 from txtinspect.core.document_indexer import DocumentIndexer  # noqa: E402
 
@@ -31,27 +29,20 @@ class TestDocumentIndexer(unittest.TestCase):
         self.test_file.write_text("This is a test document for indexing.")
 
         # Patch the llama_index imports to prevent actual initialization
-        self.patcher_ollama = patch("txtinspect.core.document_indexer.Ollama")
         self.patcher_embedding = patch("txtinspect.core.document_indexer.OllamaEmbedding")
-        self.patcher_settings = patch("txtinspect.core.document_indexer.Settings")
         self.patcher_splitter = patch("txtinspect.core.document_indexer.SentenceSplitter")
 
-        self.mock_ollama = self.patcher_ollama.start()
         self.mock_embedding = self.patcher_embedding.start()
-        self.mock_settings = self.patcher_settings.start()
         self.mock_splitter = self.patcher_splitter.start()
 
         # Configure mock return values
-        self.mock_ollama.return_value = MagicMock()
         self.mock_embedding.return_value = MagicMock()
         self.mock_splitter.return_value = MagicMock()
 
     def tearDown(self):
         """Clean up test fixtures."""
         # Stop all patchers
-        self.patcher_ollama.stop()
         self.patcher_embedding.stop()
-        self.patcher_settings.stop()
         self.patcher_splitter.stop()
 
         # Remove temporary directory
@@ -61,23 +52,16 @@ class TestDocumentIndexer(unittest.TestCase):
         """Test DocumentIndexer initialization with default configuration."""
         _ = DocumentIndexer()
 
-        # Verify that Ollama and OllamaEmbedding were called during initialization
-        self.mock_ollama.assert_called_once()
+        # Verify that OllamaEmbedding and SentenceSplitter were called during initialization
         self.mock_embedding.assert_called_once()
         self.mock_splitter.assert_called_once()
 
     def test_initialization_with_custom_models(self):
         """Test DocumentIndexer initialization with custom model configurations."""
-        custom_llm = "custom-llm-model"
         custom_embedding = "custom-embedding-model"
         custom_url = "http://custom-server:8080"
 
-        _ = DocumentIndexer(
-            llm_model=custom_llm, embedding_model=custom_embedding, base_url=custom_url
-        )
-
-        # Verify Ollama was initialized with custom parameters
-        self.mock_ollama.assert_called_once_with(model=custom_llm, base_url=custom_url)
+        _ = DocumentIndexer(embed_model=custom_embedding, base_url=custom_url)
 
         # Verify OllamaEmbedding was initialized with custom parameters
         self.mock_embedding.assert_called_once_with(
@@ -105,11 +89,12 @@ class TestDocumentIndexer(unittest.TestCase):
         mock_reader.assert_called_once_with(self.temp_dir)
         mock_reader_instance.load_data.assert_called_once()
 
-        # Verify VectorStoreIndex was created from documents with correct parameters
+        # Verify VectorStoreIndex.from_documents was called with correct parameters
+        mock_vector_store.from_documents.assert_called_once()
         call_args = mock_vector_store.from_documents.call_args
-        self.assertEqual(call_args[0][0], mock_documents)
+        self.assertEqual(call_args[1]["documents"], mock_documents)
         self.assertIn("show_progress", call_args[1])
-        self.assertIn("transformations", call_args[1])
+        self.assertIn("embed_model", call_args[1])
 
         # Verify the returned index matches the mock
         self.assertEqual(result, mock_index)
@@ -146,33 +131,50 @@ class TestDocumentIndexer(unittest.TestCase):
         indexer = DocumentIndexer()
         result = indexer.create_index(str(empty_dir))
 
-        # Verify VectorStoreIndex was still called even with empty documents
+        # Verify VectorStoreIndex was called with empty documents
+        mock_vector_store.from_documents.assert_called_once()
         call_args = mock_vector_store.from_documents.call_args
-        self.assertEqual(call_args[0][0], [])
-        self.assertIn("show_progress", call_args[1])
+        self.assertEqual(call_args[1]["documents"], [])
         self.assertEqual(result, mock_index)
 
     @patch("txtinspect.core.document_indexer.VectorStoreIndex")
     @patch("txtinspect.core.document_indexer.SimpleDirectoryReader")
-    def test_create_index_reader_exception(self, mock_reader, mock_vector_store):
-        """Test that exceptions from SimpleDirectoryReader are wrapped with context."""
-        # Configure mock to raise an exception
+    def test_create_index_reader_filenotfound(self, mock_reader, mock_vector_store):
+        """Test that FileNotFoundError from SimpleDirectoryReader is wrapped."""
+        # Configure mock to raise FileNotFoundError
         mock_reader_instance = MagicMock()
-        mock_reader_instance.load_data.side_effect = Exception("Failed to load documents")
+        mock_reader_instance.load_data.side_effect = FileNotFoundError("Directory not found")
         mock_reader.return_value = mock_reader_instance
 
         indexer = DocumentIndexer()
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(FileNotFoundError) as context:
             indexer.create_index(self.temp_dir)
 
         # Check for wrapped exception message
-        self.assertIn("Failed to load documents from source directory", str(context.exception))
+        self.assertIn("was not found while loading documents", str(context.exception))
+
+    @patch("txtinspect.core.document_indexer.VectorStoreIndex")
+    @patch("txtinspect.core.document_indexer.SimpleDirectoryReader")
+    def test_create_index_reader_permission_error(self, mock_reader, mock_vector_store):
+        """Test that PermissionError from SimpleDirectoryReader is wrapped."""
+        # Configure mock to raise PermissionError
+        mock_reader_instance = MagicMock()
+        mock_reader_instance.load_data.side_effect = PermissionError("Access denied")
+        mock_reader.return_value = mock_reader_instance
+
+        indexer = DocumentIndexer()
+
+        with self.assertRaises(PermissionError) as context:
+            indexer.create_index(self.temp_dir)
+
+        # Check for wrapped exception message
+        self.assertIn("Insufficient permissions", str(context.exception))
 
     @patch("txtinspect.core.document_indexer.VectorStoreIndex")
     @patch("txtinspect.core.document_indexer.SimpleDirectoryReader")
     def test_create_index_vectorstore_exception(self, mock_reader, mock_vector_store):
-        """Test that exceptions from VectorStoreIndex are wrapped with context."""
+        """Test that RuntimeError from indexing is wrapped with context."""
         # Set up reader mock to succeed
         mock_documents = [MagicMock(text="Document 1")]
         mock_reader_instance = MagicMock()
@@ -180,14 +182,14 @@ class TestDocumentIndexer(unittest.TestCase):
         mock_reader.return_value = mock_reader_instance
 
         # Configure VectorStoreIndex to raise an exception
-        mock_vector_store.from_documents.side_effect = Exception("Indexing failed")
+        mock_vector_store.from_documents.side_effect = RuntimeError("Indexing failed")
 
         indexer = DocumentIndexer()
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(RuntimeError) as context:
             indexer.create_index(self.temp_dir)
 
-        self.assertIn("Failed to create vector", str(context.exception))
+        self.assertIn("runtime error occurred while creating", str(context.exception))
 
     @patch("txtinspect.core.document_indexer.VectorStoreIndex")
     @patch("txtinspect.core.document_indexer.SimpleDirectoryReader")
@@ -204,44 +206,29 @@ class TestDocumentIndexer(unittest.TestCase):
 
         indexer = DocumentIndexer()
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(TimeoutError) as context:
             indexer.create_index(self.temp_dir)
 
-        self.assertIn("Failed to create vector store index", str(context.exception))
+        self.assertIn("Timed out while creating the vector store index", str(context.exception))
 
     @patch("txtinspect.core.document_indexer.VectorStoreIndex")
     @patch("txtinspect.core.document_indexer.SimpleDirectoryReader")
     def test_create_index_with_file_path(self, mock_reader, mock_vector_store):
         """Test create_index with a direct file path instead of directory."""
-        # Set up mocks
-        mock_documents = [MagicMock(text="Document content")]
-        mock_reader_instance = MagicMock()
-        mock_reader_instance.load_data.return_value = mock_documents
-        mock_reader.return_value = mock_reader_instance
-
-        mock_index = MagicMock()
-        mock_vector_store.from_documents.return_value = mock_index
-
         indexer = DocumentIndexer()
         with self.assertRaises(ValueError) as context:
             _ = indexer.create_index(str(self.test_file))
 
-        self.assertIn("Argument source is invalid", str(context.exception))
+        self.assertIn("is not a directory", str(context.exception))
 
     def test_settings_configuration(self):
-        """Test that Settings are properly configured during initialization."""
-        custom_llm = "test-llm"
+        """Test that embedding model is properly configured during initialization."""
         custom_embedding = "test-embedding"
         custom_url = "http://test:9999"
 
-        _ = DocumentIndexer(
-            llm_model=custom_llm, embedding_model=custom_embedding, base_url=custom_url
-        )
+        _ = DocumentIndexer(embed_model=custom_embedding, base_url=custom_url)
 
-        # Verify Settings.llm was assigned
-        self.mock_ollama.assert_called_once()
-
-        # Verify Settings.embed_model was assigned
+        # Verify embedding model was initialized
         self.mock_embedding.assert_called_once()
 
     def test_initialization_with_custom_chunk_params(self):

@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+from llama_index.llms.ollama import Ollama  # type: ignore[import-untyped]
 from txtinspect.core.document_indexer import DocumentIndexer
 from txtinspect.config import config
 
@@ -39,8 +40,7 @@ def index_and_chat(args: argparse.Namespace) -> None:
     try:
         # Initialize the document indexer with configuration
         indexer = DocumentIndexer(
-            llm_model=config.llm_model,
-            embedding_model=config.embedding_model,
+            embed_model=config.embed_model,
             base_url=config.llm_base_url,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -55,8 +55,11 @@ def index_and_chat(args: argparse.Namespace) -> None:
         print("\nStarting interactive chat session...")
         print("Type your questions below (or 'exit', 'quit', 'q' to quit)\n")
 
+        # Configure Ollama model
+        llm = Ollama(model=config.llm_model, base_url=config.llm_base_url)
+
         # Create query engine from the index
-        query_engine = index.as_query_engine()
+        query_engine = index.as_query_engine(llm=llm)
 
         # Interactive chat loop
         while True:

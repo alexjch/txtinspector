@@ -84,7 +84,8 @@ MIT
 
 ## TODO
 
-- [ ] Use pipeline instead of step by step "transformations".
 - [ ] Use the async API.
 - [ ] Use the streamming API.
 - [ ] Expand source argument to grab documents from URL pdf, html, txt.
+- [x] ~~Use pipeline instead of step by step "transformations".~~ Best when using an external Vector database. I'm keeping VectorStoreIndex for simplicity.
+
