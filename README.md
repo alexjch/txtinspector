@@ -8,6 +8,13 @@ A Retrieval-Augmented Generation (RAG) application for loading text documents an
 - **Question Answering**: Ask questions about your documents and get AI-generated responses
 - **Index Management**: List, clear, and view statistics about your document index
 
+## Pre-reqs
+```
+# default models
+ollama pull nomic-embed-text
+ollama pull gemma:2b
+```
+
 ## Installation
 
 ```bash
@@ -20,40 +27,20 @@ make dev
 
 ## Usage
 
-### Load Documents
+### Load and query documents
 
-Load documents from a file or directory:
+Load documents from a directory:
 
 ```bash
-txtinspect load --source ./documents --chunk-size 512
+txtinspect --chunk-size 512 ./documents
 ```
 
 ### Query Documents
 
-Ask questions about loaded documents:
+Once the document was successfully loaded you can ask questions about the content:
 
 ```bash
-txtinspect query --question "What is the main topic?" --top-k 5 --model llama3
-```
-
-### Manage Index
-
-View indexed documents:
-
-```bash
-txtinspect index list
-```
-
-View index statistics:
-
-```bash
-txtinspect index stats
-```
-
-Clear the index:
-
-```bash
-txtinspect index clear
+You: what is this document about?
 ```
 
 ## Configuration
@@ -68,22 +55,8 @@ Configuration can be set via environment variables:
 - `TXTINSPECT_PERSIST_DIR`: Vector store directory (default: ./chroma_db)
 - `TXTINSPECT_TOP_K`: Number of chunks to retrieve (default: 5)
 
-## Architecture
+Default values are defined in [config.py](./txtinspect/config.py)
 
-The application consists of:
-
-- **CLI Interface**: Command-line interface for user interaction
-- **Commands**: Load, query, and index management commands
-- **Core Modules**: Document loading, embedding, vector storage, and LLM services
-- **Configuration**: Centralized configuration management
-
-## Technology Stack
-
-- **CLI Framework**: argparse
-- **Embeddings**: llama-index
-- **Vector Store**: ChromaDB
-- **LLM**: Ollama (hosted separately)
-- **Configuration**: Environment variables / TOML
 
 ## Development
 
@@ -108,3 +81,10 @@ make lint
 ## License
 
 MIT
+
+## TODO
+
+- [ ] Use pipeline instead of step by step "transformations".
+- [ ] Use the async API.
+- [ ] Use the streamming API.
+- [ ] Expand source argument to grab documents from URL pdf, html, txt.

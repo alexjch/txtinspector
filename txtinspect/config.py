@@ -1,8 +1,6 @@
 """Configuration management for txtinspect."""
 
 import os
-from pathlib import Path
-from typing import Optional
 
 
 class Config:
@@ -32,20 +30,6 @@ class Config:
         self.vector_store = os.getenv("TXTINSPECT_VECTOR_STORE", self.DEFAULT_VECTOR_STORE)
         self.persist_dir = os.getenv("TXTINSPECT_PERSIST_DIR", self.DEFAULT_PERSIST_DIR)
         self.top_k = int(os.getenv("TXTINSPECT_TOP_K", self.DEFAULT_TOP_K))
-
-    @classmethod
-    def from_file(cls, config_path: Optional[Path] = None) -> "Config":
-        """
-        Load configuration from a TOML file.
-
-        Args:
-            config_path: Path to the configuration file
-
-        Returns:
-            Config instance
-        """
-        # TODO: Implement TOML configuration loading
-        return cls()
 
 
 # Global config instance

@@ -28,13 +28,3 @@ format:
 lint:
 	flake8 txtinspect/ tests/
 	mypy txtinspect/
-
-# Example commands
-run-load:
-	txtinspect load --source ./documents --chunk-size 512
-
-run-query:
-	txtinspect query --question "What is the main topic?" --top-k 5
-
-run-index:
-	txtinspect index stats
