@@ -1,9 +1,11 @@
 """Main application entry point for txtinspect RAG system."""
 
 import argparse
+from txtinspect.commands.index import index_and_chat
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Text Inspector - A RAG application for document Q&A",
         epilog="After indexing, you'll enter an interactive chat session to query your documents.",
@@ -27,9 +29,6 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Main function to index documents and start interactive query session."""
     args = parse_args()
-
-    from txtinspect.commands.index import index_and_chat
-
     index_and_chat(args)
 
 

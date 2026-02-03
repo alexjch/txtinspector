@@ -80,17 +80,17 @@ def index_and_chat(args: argparse.Namespace) -> None:
             except KeyboardInterrupt:
                 print("\n\nGoodbye!")
                 break
-            except Exception as e:
-                print(f"\n✗ Error processing query: {e}")
+            except Exception as exc:
+                print(f"\n✗ Error processing query: {exc}")
                 print("Please try again or type 'exit' to quit.")
 
-    except ValueError as e:
-        print(f"\n✗ Error: {e}")
+    except ValueError as exc:
+        print(f"\n✗ Error: {exc}")
         raise
-    except TimeoutError as e:
-        print(f"\n✗ Timeout: {e}")
+    except TimeoutError as exc:
+        print(f"\n✗ Timeout: {exc}")
         print("Make sure Ollama service is running and accessible")
         raise
-    except Exception as e:
-        print(f"\n✗ Failed to index documents: {e}")
+    except Exception as exc:
+        print(f"\n✗ Failed to index documents: {exc}")
         raise
