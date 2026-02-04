@@ -9,7 +9,6 @@ from unittest.mock import patch, MagicMock, Mock
 
 # Mock llama_index modules before importing DocumentIndexer
 # This prevents network calls to Ollama during testing
-sys.modules["llama_index"] = Mock()
 sys.modules["llama_index.core"] = Mock()
 sys.modules["llama_index.core.node_parser"] = Mock()
 sys.modules["llama_index.embeddings"] = Mock()
@@ -95,6 +94,10 @@ class TestDocumentIndexer(unittest.TestCase):
         self.assertEqual(call_args[1]["documents"], mock_documents)
         self.assertIn("show_progress", call_args[1])
         self.assertIn("embed_model", call_args[1])
+        self.assertIn("transformations", call_args[1])
+        # Verify text_splitter is in transformations
+        transformations = call_args[1]["transformations"]
+        self.assertEqual(len(transformations), 1)
 
         # Verify the returned index matches the mock
         self.assertEqual(result, mock_index)
@@ -228,8 +231,10 @@ class TestDocumentIndexer(unittest.TestCase):
 
         _ = DocumentIndexer(embed_model=custom_embedding, base_url=custom_url)
 
-        # Verify embedding model was initialized
-        self.mock_embedding.assert_called_once()
+        # Verify embedding model was initialized with correct parameters
+        self.mock_embedding.assert_called_once_with(
+            model_name=custom_embedding, base_url=custom_url
+        )
 
     def test_initialization_with_custom_chunk_params(self):
         """Test DocumentIndexer initialization with custom chunk parameters."""
