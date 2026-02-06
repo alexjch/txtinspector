@@ -1,0 +1,48 @@
+{
+	"name": "txtinspector-devcontainer",
+	"build": {
+		"dockerfile": "Containerfile",
+		"context": "."
+	},
+	"workspaceFolder": "/workspace",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached,z",
+	
+	"runArgs": [
+		"--rm",
+		"--userns=keep-id",
+		"--security-opt=label=disable",
+		"--name=txtinspector-devcontainer",
+		"--network=host"
+	],
+	"containerUser": "vscode",
+	"containerEnv": {
+		"PYTHONPATH": "/workspace/."
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.debugpy",
+				"ms-python.python",
+				"ms-python.vscode-pylance"
+			],
+			"settings": {
+				"python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+				"python.terminal.activateEnvironment": true,
+				"editor.formatOnSave": true,
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"terminal.integrated.profiles.linux": {
+					"fish": {
+						"path": "/usr/bin/bash"
+					}
+				},
+				"[python]": {
+					"editor.codeActionsOnSave": {
+						"source.fixAll": "explicit",
+						"source.organizeImports": "explicit"
+					}
+				}
+			}
+		}
+	},
+	"postCreateCommand": "pip3 install -r requirements.txt"
+}
