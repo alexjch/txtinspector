@@ -56,10 +56,10 @@ def index_and_chat(args: argparse.Namespace) -> None:
         print("Type your questions below (or 'exit', 'quit', 'q' to quit)\n")
 
         # Configure Ollama model
-        llm = Ollama(model=config.llm_model, base_url=config.llm_base_url)
+        llm = Ollama(model=config.llm_model, base_url=config.llm_base_url)   # type: ignore[import-untyped]
 
         # Create query engine from the index
-        query_engine = index.as_query_engine(llm=llm)
+        query_engine = index.as_query_engine(streaming=True, llm=llm)   # type: ignore[import-untyped]
 
         # Interactive chat loop
         while True:

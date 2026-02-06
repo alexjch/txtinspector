@@ -36,7 +36,7 @@ class DocumentIndexer:
         """
         self.show_progress = show_progress
         # Initialize and store the embedding model for indexing operations.
-        self.embed_model = OllamaEmbedding(
+        self.embed_model = OllamaEmbedding(   # type: ignore[import-untyped]
             model_name=embed_model,
             base_url=base_url,
         )
@@ -99,7 +99,7 @@ class DocumentIndexer:
         try:
             index = VectorStoreIndex.from_documents(
                 documents=documents,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model,   # type: ignore[import-untyped]
                 show_progress=self.show_progress,
                 transformations=[self.text_splitter],
             )

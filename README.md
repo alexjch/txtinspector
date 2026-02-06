@@ -86,8 +86,9 @@ MIT
 
 - [ ] Improve CLI UX.
     - [x] ~~Use the async API?~~ There's no good place where this can be added, maybe handling first time model pull?
-    - [ ] Use the streamming API?
+    - [x] Use the streamming API?
     - [ ] Use click for chat?
 - [ ] Expand source argument to grab documents from URL pdf, html, txt.
 - [ ] Persist index in disk.
+- [ ] Test using specific documents i.e. ToS, where chunking is more "delicate" that chopping text by length.
 - [x] ~~Use pipeline instead of step by step "transformations".~~ Best when using an external Vector database. I'm keeping VectorStoreIndex for simplicity.
