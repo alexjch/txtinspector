@@ -66,7 +66,7 @@ class TestIndexCommand(unittest.TestCase):
         mock_ollama.assert_called_once()
 
         # Verify query engine was created with LLM
-        mock_index.as_query_engine.assert_called_once_with(llm=mock_llm)
+        mock_index.as_query_engine.assert_called_once_with(streaming=True, llm=mock_llm)
 
     @patch("builtins.input", side_effect=["exit"])
     @patch("txtinspect.commands.index.Ollama")
@@ -101,7 +101,7 @@ class TestIndexCommand(unittest.TestCase):
         self.assertTrue(call_kwargs["show_progress"])
 
         # Verify query engine was created with LLM
-        mock_index.as_query_engine.assert_called_once_with(llm=mock_llm)
+        mock_index.as_query_engine.assert_called_once_with(streaming=True, llm=mock_llm)
 
     @patch("txtinspect.commands.index.DocumentIndexer")
     def test_index_command_invalid_directory(self, mock_indexer_class):
@@ -172,7 +172,7 @@ class TestIndexCommand(unittest.TestCase):
         self.assertTrue(call_kwargs["show_progress"])
 
         # Verify query engine was created with LLM
-        mock_index.as_query_engine.assert_called_once_with(llm=mock_llm)
+        mock_index.as_query_engine.assert_called_once_with(streaming=True, llm=mock_llm)
 
     @patch("builtins.input", side_effect=["What is this about?", "exit"])
     @patch("txtinspect.commands.index.Ollama")
