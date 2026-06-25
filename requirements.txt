@@ -1,6 +1,6 @@
 # Core dependencies (from pyproject.toml [project.dependencies])
 llama-index-core>=0.9.0
-llama-index-embeddings-ollama==0.8.6
+llama-index-embeddings-ollama==0.9.0
 llama-index-llms-ollama==0.9.1
 
 # Development dependencies (from pyproject.toml [project.optional-dependencies.dev])
